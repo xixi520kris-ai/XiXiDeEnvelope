@@ -905,5 +905,16 @@ function refreshWheelList(){
 
 </script>
 
+<script>
+// 注册 Service Worker 防止微信/GitHub CDN 缓存
+if('serviceWorker' in navigator){
+  var code="self.addEventListener('install',()=>self.skipWaiting());"+
+    "self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));"+
+    "self.addEventListener('fetch',e=>e.respondWith(fetch(e.request,{cache:'no-store'})))";
+  var blob=new Blob([code],{type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob));
+}
+</script>
+
 </body>
 </html>
