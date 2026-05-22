@@ -317,6 +317,7 @@ body{
     <div id="gomokuMsg" style="text-align:center;font-size:16px;color:#ffd700;margin:8px 0;min-height:24px"></div>
     <div class="gomoku-board" id="gomokuBoard"></div>
     <button class="cute-btn btn-pink" id="gomokuReset" style="margin-top:12px">🔄 再来一局</button>
+    <button class="cute-btn btn-outline" id="cheatBtn" style="margin-top:8px;font-size:13px;padding:6px 16px">📖 使用秘籍</button>
   </div>
 
   <!-- 3. 土豆研究所 -->
@@ -451,6 +452,20 @@ body{
     <div class="popup-emoji">😴💤</div>
     <div class="popup-msg">就知道小宝会点晚睡~</div>
     <button class="cute-btn btn-pink" onclick="document.getElementById('popup').classList.remove('show')">小宝要重新选哦</button>
+  </div>
+</div>
+
+<!-- 秘籍弹窗 -->
+<div class="popup-overlay" id="cheatPopup" style="z-index:99">
+  <div class="popup-card">
+    <span class="popup-deco tl">📖</span><span class="popup-deco tr">✨</span>
+    <div class="popup-emoji">🤫🎀</div>
+    <div class="popup-msg" style="font-size:18px">学习秘籍后棋手雷雷将变成小傻瓜~</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+      <button class="cute-btn btn-pink" id="cheatNoBtn">💪 我再努努力</button>
+      <button class="cute-btn btn-gold" id="cheatYesBtn">📖 学习秘籍！</button>
+    </div>
+    <button class="cute-btn btn-outline" id="cheatCloseBtn" style="margin-top:10px;display:none">👌 关闭</button>
   </div>
 </div>
 
@@ -647,7 +662,7 @@ let gomokuBuilt=false;
 function buildGomoku(){
   if(gomokuBuilt)return;gomokuBuilt=true;
   const SIZE=15,board=document.getElementById('gomokuBoard'),msg=document.getElementById('gomokuMsg');
-  let grid,gameOver,userTurn,aiWins=0; // user=2(white), AI=1(black)
+  let grid,gameOver,userTurn,aiWins=0,cheatMode=false; // user=2(white), AI=1(black)
   const animals=['🐶','🐱','🐰','🐼','🐨','🐸','🐵','🦊','🐯','🐮','🐷','🐙','🦄','🐣','🐥','🦋','🐝','🐬','🐳','🐠'];
 
   const SCORES={1:{1:1,2:10,3:100,4:1000,5:10000},2:{1:1,2:10,3:100,4:1000,5:10000}};
@@ -681,6 +696,18 @@ function buildGomoku(){
   function checkWin(r,c){const p=grid[r][c];if(!p)return false;const dirs=[[1,0],[0,1],[1,1],[1,-1]];for(const[dr,dc]of dirs){let cnt=1;for(let i=1;i<5;i++){const nr=r+dr*i,nc=c+dc*i;if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&grid[nr][nc]===p)cnt++;else break}for(let i=1;i<5;i++){const nr=r-dr*i,nc=c-dc*i;if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&grid[nr][nc]===p)cnt++;else break}if(cnt>=5)return true}return false}
 
   function aiMove(){
+    if(cheatMode){
+      // Simple AI in cheat mode — only looks one step ahead
+      let best=[-1,-1,-1];
+      const ns=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+      for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(!grid[r][c]){
+        let s=0;
+        for(const[dr,dc]of ns){const nr=r+dr,nc=c+dc;if(nr>=0&&nr<SIZE&&nc>=0&&nc<SIZE&&grid[nr][nc])s++}
+        if(s>best[2])best=[r,c,s];
+      }
+      if(best[0]<0){for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(!grid[r][c])return[r,c]}
+      return[best[0],best[1]];
+    }
     let best=[-1,-1,-Infinity];
     for(let r=0;r<SIZE;r++)for(let c=0;c<SIZE;c++)if(!grid[r][c]){
       const attack=evalPos(r,c,1)*1.1; // prioritize attack slightly
@@ -731,6 +758,25 @@ function buildGomoku(){
 
   init();render();
   document.getElementById('gomokuReset').addEventListener('click',()=>{init();render()});
+  // 秘籍按钮
+  const cheatPopup=document.getElementById('cheatPopup'),cheatClose=document.getElementById('cheatCloseBtn');
+  document.getElementById('cheatBtn').addEventListener('click',()=>{
+    cheatClose.style.display='none';
+    cheatClose.previousElementSibling.style.display='';
+    cheatPopup.querySelector('.popup-msg').textContent='学习秘籍后棋手雷雷将变成小傻瓜~';
+    cheatPopup.classList.add('show');
+  });
+  document.getElementById('cheatNoBtn').addEventListener('click',()=>{
+    cheatClose.style.display='';cheatClose.previousElementSibling.style.display='none';
+    cheatPopup.querySelector('.popup-msg').textContent='💪 自信的羲羲最棒啦~';
+  });
+  document.getElementById('cheatYesBtn').addEventListener('click',()=>{
+    cheatMode=true;
+    cheatClose.style.display='';cheatClose.previousElementSibling.style.display='none';
+    cheatPopup.querySelector('.popup-msg').textContent='🎉 恭喜羲羲领悟绝世秘籍~雷雷棋手开启傻瓜模式！';
+    init();render();
+  });
+  cheatClose.addEventListener('click',()=>cheatPopup.classList.remove('show'));
 }
 
 // ── 导航点 ──
